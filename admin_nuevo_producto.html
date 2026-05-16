@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nuevo Producto | AMInventary Admin</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: DM Sans -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&display=swap"
+        rel="stylesheet">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+        body {
+            font-family: 'DM Sans', sans-serif;
+        }
+
+        /* Gradiente dorado corporativo */
+        .gold-gradient {
+            background: linear-gradient(135deg, #c9a84c 0%, #e8d5a3 50%, #c9a84c 100%);
+        }
+
+        /* Sombra sutil corporativa */
+        .corporate-shadow {
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+        }
+
+        .sidebar-dark { background-color: #0f172a; }
+
+        .notification-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: #ef4444;
+            color: white;
+            font-size: 10px;
+            font-weight: 800;
+            padding: 2px 6px;
+            border-radius: 50%;
+            border: 2px solid #0f172a;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-50 text-slate-800 min-h-screen flex overflow-hidden">
+
+    <!-- 1. BARRA LATERAL IZQUIERDA (SIDEBAR) -->
+    <aside class="w-72 sidebar-dark text-slate-300 flex flex-col justify-between h-screen flex-shrink-0">
+        <div>
+            <div class="p-8 border-b border-slate-800">
+                <div class="flex items-center gap-3">
+                    <img src="{{ url_for('static', filename='img/logo.png') }}" class="w-10 h-10 rounded-xl shadow-lg object-cover" onerror="this.src='https://ui-avatars.com/api/?name=AMI&background=c9a84c&color=fff'">
+                    <div>
+                        <h2 class="text-xl font-bold tracking-tight text-white">AMInventary</h2>
+                        <p class="text-[10px] uppercase tracking-[0.2em] text-slate-500 font-bold">Alta de Producto</p>
+                    </div>
+                </div>
+            </div>
+
+            <nav class="flex-1 px-4 py-8 space-y-2">
+                <p class="px-4 text-[10px] uppercase tracking-widest text-slate-500 font-bold mb-4">Navegación Principal</p>
+                
+                <a href="{{ url_for('admin.dashboard') }}" class="flex items-center gap-3 p-4 rounded-2xl text-slate-400 hover:bg-white/5 hover:text-white transition-all group">
+                    <i data-lucide="layout-grid" class="w-5 h-5 group-hover:text-[#c9a84c]"></i> Dashboard General
+                </a>
+                
+                <a href="{{ url_for('admin.reporte_inventario') }}" class="flex items-center gap-3 p-4 rounded-2xl text-slate-400 hover:bg-white/5 hover:text-white transition-all group">
+                    <i data-lucide="box" class="w-5 h-5 group-hover:text-[#c9a84c]"></i> Panel de Inventarios
+                </a>
+                
+                <a href="{{ url_for('admin.gestion_pedidos') }}" class="flex items-center gap-3 p-4 rounded-2xl text-slate-400 hover:bg-white/5 hover:text-white transition-all group relative">
+                    <i data-lucide="shopping-cart" class="w-5 h-5 group-hover:text-[#c9a84c]"></i> Gestión de Pedidos
+                    {% if pedidos_pendientes > 0 %}
+                    <span class="absolute top-4 right-4 w-5 h-5 bg-rose-500 text-[10px] flex items-center justify-center rounded-full text-white font-bold border-2 border-[#0f172a]">{{ pedidos_pendientes }}</span>
+                    {% endif %}
+                </a>
+
+                <p class="px-4 pt-8 text-[10px] uppercase tracking-widest text-slate-500 font-bold mb-4">Gestión de Datos</p>
+                
+                <a href="{{ url_for('admin.nuevo_producto') }}" class="flex items-center gap-3 p-4 rounded-2xl bg-white/10 text-white font-medium border border-white/5 transition-all">
+                    <i data-lucide="package-plus" class="w-5 h-5 text-[#c9a84c]"></i> Productos
+                </a>
+
+                <a href="{{ url_for('admin.directorio') }}" class="flex items-center justify-between p-4 rounded-2xl text-slate-400 hover:bg-white/5 hover:text-white transition-all group">
+                    <div class="flex items-center gap-3">
+                        <i data-lucide="book-open" class="w-5 h-5 group-hover:text-[#c9a84c]"></i> Directorio Comercial
+                    </div>
+                </a>
+            </nav>
+        </div>
+
+            <div class="p-6 border-t border-slate-800">
+                <div class="bg-slate-800/50 rounded-2xl p-4 border border-white/5 flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-full bg-gradient-to-br from-[#c9a84c] to-[#e8d5a3] flex items-center justify-center text-slate-900 font-bold">AD</div>
+                    <div>
+                        <p class="text-sm font-bold text-white">Administrador</p>
+                        <p class="text-[10px] text-slate-500">Sesión Activa</p>
+                    </div>
+                </div>
+            </div>
+    </aside>
+
+    <!-- 2. CONTENEDOR PRINCIPAL (MAIN CONTENT) -->
+    <main class="flex-1 flex flex-col h-screen overflow-y-auto aspect-video">
+
+        <!-- Cabecera -->
+        <header class="px-8 py-6 bg-white border-b border-gray-100 flex items-center justify-between flex-shrink-0">
+            <div>
+                <span class="text-xs font-bold text-[#c9a84c] tracking-widest uppercase">Módulo de Altas</span>
+                <h1 class="text-2xl font-bold text-slate-900 mt-0.5">Registrar Nuevo Producto</h1>
+            </div>
+
+            <a href="{{ url_for('admin.dashboard') }}"
+                class="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-gray-200 text-sm font-medium text-slate-600 hover:bg-gray-50 hover:text-slate-900 transition-all duration-200 corporate-shadow">
+                <i data-lucide="arrow-left" class="w-4 h-4"></i>
+                Volver al Dashboard
+            </a>
+        </header>
+
+        <!-- Área del Contenido Central -->
+        <div class="flex-1 p-8 flex items-center justify-center">
+
+            <!-- Tarjeta del Formulario -->
+            <div class="bg-white w-full max-w-4xl rounded-2xl border border-gray-100 corporate-shadow p-8 md:p-10">
+
+                <!-- Encabezado sutil interno -->
+                <div class="mb-8 border-b border-gray-100 pb-4 flex items-center gap-3">
+                    <div class="p-2 rounded-lg bg-amber-50 text-[#c9a84c]">
+                        <i data-lucide="plus-circle" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-lg font-bold text-slate-800">Información del Producto</h2>
+                        <p class="text-xs text-gray-400">Todos los campos a continuación son obligatorios para el
+                            control de existencias.</p>
+                    </div>
+                </div>
+
+                <!-- Mensajes de éxito (Flash) -->
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                  {% if messages %}
+                    {% for category, message in messages %}
+                      <div class="mb-6 p-4 rounded-xl bg-green-50 border border-green-100 flex items-center gap-3 text-green-700 animate-pulse">
+                        <i data-lucide="check-circle" class="w-5 h-5"></i>
+                        <p class="text-sm font-medium">{{ message }}</p>
+                      </div>
+                    {% endfor %}
+                  {% endif %}
+                {% endwith %}
+
+                <!-- 3. CAMPOS DEL FORMULARIO -->
+                <form class="space-y-6" method="POST" action="{{ url_for('admin.nuevo_producto') }}">
+
+                    <!-- Grid de Dos Columnas -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+                        <!-- Código del Producto -->
+                        <div class="flex flex-col gap-2">
+                            <label for="codigo" class="text-xs font-bold text-slate-700 uppercase tracking-wider">Código
+                                del Producto</label>
+                            <div class="relative">
+                                <span
+                                    class="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-gray-400">
+                                    <i data-lucide="qr-code" class="w-4 h-4"></i>
+                                </span>
+                                <input type="text" id="codigo" name="codigo" required placeholder="Ej: B001"
+                                    class="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm transition-all duration-200 outline-none text-slate-800 placeholder-gray-400 focus:bg-white focus:border-[#c9a84c] focus:ring-2 focus:ring-[#c9a84c]/20">
+                            </div>
+                        </div>
+
+                        <!-- Nombre del Producto -->
+                        <div class="flex flex-col gap-2">
+                            <label for="nombre" class="text-xs font-bold text-slate-700 uppercase tracking-wider">Nombre
+                                del Producto</label>
+                            <div class="relative">
+                                <span
+                                    class="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-gray-400">
+                                    <i data-lucide="tag" class="w-4 h-4"></i>
+                                </span>
+                                <input type="text" id="nombre" name="nombre" required placeholder="Ej: Ácido Hialurónico 1ml"
+                                    class="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm transition-all duration-200 outline-none text-slate-800 placeholder-gray-400 focus:bg-white focus:border-[#c9a84c] focus:ring-2 focus:ring-[#c9a84c]/20">
+                            </div>
+                        </div>
+
+                        <!-- Categoría -->
+                        <div class="flex flex-col gap-2">
+                            <label for="categoria"
+                                class="text-xs font-bold text-slate-700 uppercase tracking-wider">Categoría</label>
+                            <div class="relative">
+                                <span
+                                    class="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-gray-400">
+                                    <i data-lucide="folder" class="w-4 h-4"></i>
+                                </span>
+                                <select id="categoria" name="categoria" required
+                                    class="w-full pl-10 pr-10 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm transition-all duration-200 outline-none text-slate-800 appearance-none focus:bg-white focus:border-[#c9a84c] focus:ring-2 focus:ring-[#c9a84c]/20">
+                                    <option value="" disabled selected class="text-gray-400">Seleccione una categoría
+                                    </option>
+                                    <option value="estetica">Estética Facial</option>
+                                    <option value="aparatologia">Aparatología</option>
+                                    <option value="cosmeceuticos">Cosmecéuticos</option>
+                                    <option value="mesoterapia">Mesoterapia</option>
+                                </select>
+                                <span
+                                    class="absolute inset-y-0 right-0 flex items-center pr-3.5 pointer-events-none text-gray-400">
+                                    <i data-lucide="chevron-down" class="w-4 h-4"></i>
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- Precio de Venta -->
+                        <div class="flex flex-col gap-2">
+                            <label for="precio" class="text-xs font-bold text-slate-700 uppercase tracking-wider">Precio
+                                de Venta ($)</label>
+                            <div class="relative">
+                                <span
+                                    class="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none font-semibold text-sm text-slate-400">
+                                    $
+                                </span>
+                                <input type="number" id="precio" name="precio" required step="0.01" min="0" placeholder="0.00"
+                                    class="w-full pl-8 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm transition-all duration-200 outline-none text-slate-800 placeholder-gray-400 focus:bg-white focus:border-[#c9a84c] focus:ring-2 focus:ring-[#c9a84c]/20">
+                            </div>
+                        </div>
+
+                        <!-- Comisión por Venta -->
+                        <div class="flex flex-col gap-2">
+                            <label for="comision" class="text-xs font-bold text-slate-700 uppercase tracking-wider">Comisión por Venta (%)</label>
+                            <div class="relative">
+                                <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-gray-400">
+                                    <i data-lucide="percent" class="w-4 h-4"></i>
+                                </span>
+                                <input type="number" id="comision" name="comision" required step="0.1" min="0" max="100" placeholder="Ej: 10.0"
+                                    class="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm transition-all duration-200 outline-none text-slate-800 focus:bg-white focus:border-[#c9a84c] focus:ring-2 focus:ring-[#c9a84c]/20">
+                            </div>
+                        </div>
+
+                        <!-- Stock Inicial (Ocupa las dos columnas en diseño responsive o se alinea en el grid) -->
+                        <div class="flex flex-col gap-2 md:col-span-2">
+                            <label for="stock" class="text-xs font-bold text-slate-700 uppercase tracking-wider">Stock
+                                Inicial en Almacén Central</label>
+                            <div class="relative">
+                                <span
+                                    class="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-gray-400">
+                                    <i data-lucide="package-check" class="w-4 h-4"></i>
+                                </span>
+                                <input type="number" id="stock" name="stock" required min="0" placeholder="Ej: 50"
+                                    class="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm transition-all duration-200 outline-none text-slate-800 placeholder-gray-400 focus:bg-white focus:border-[#c9a84c] focus:ring-2 focus:ring-[#c9a84c]/20">
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <!-- 4. BOTONES DE ACCIÓN -->
+                    <div class="pt-4 flex flex-col md:flex-row gap-4">
+                        <button type="submit"
+                            class="gold-gradient flex-1 py-3.5 rounded-xl text-white font-bold text-sm shadow-md transition-all duration-300 transform hover:scale-[1.01] hover:brightness-105 active:scale-[0.99] flex items-center justify-center gap-2 tracking-wide">
+                            <i data-lucide="save" class="w-4 h-4"></i>
+                            Guardar y Registrar Producto
+                        </button>
+                    </div>
+
+                </form>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Inicialización de los íconos de Lucide -->
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+
+</html>

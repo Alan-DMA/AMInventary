@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="es" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Historial de Traslados | AMInventary Admin</title>
+    <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+    <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { font-family: 'DM Sans', sans-serif; }
+        .gold-gradient { background: linear-gradient(135deg, #c9a84c 0%, #e8d5a3 50%, #c9a84c 100%); }
+        .card-shadow { box-shadow: 0 4px 20px rgba(0,0,0,0.04); }
+        .sidebar-dark { background-color: #0f172a; }
+        .notification-badge {
+            position: absolute; top: -5px; right: -5px; background: #ef4444; color: white;
+            font-size: 10px; font-weight: 800; padding: 2px 6px; border-radius: 50%; border: 2px solid #0f172a;
+        }
+    </style>
+</head>
+<body class="h-full bg-gray-50 text-slate-800">
+    <div class="flex h-full">
+        
+        <!-- SIDEBAR -->
+        <aside class="hidden md:flex flex-col w-72 sidebar-dark text-white shadow-2xl">
+            <div class="p-8 border-b border-slate-800">
+                <div class="flex items-center gap-3">
+                    <img src="{{ url_for('static', filename='img/logo.png') }}" class="w-10 h-10 rounded-xl shadow-lg object-cover" onerror="this.src='https://ui-avatars.com/api/?name=AMI&background=c9a84c&color=fff'">
+                    <div>
+                        <h2 class="text-xl font-bold tracking-tight">AMInventary</h2>
+                        <p class="text-[10px] uppercase tracking-[0.2em] text-slate-500 font-bold">Historial Logístico</p>
+                    </div>
+                </div>
+            </div>
+            
+            <nav class="flex-1 px-4 py-8 space-y-2">
+                <p class="px-4 text-[10px] uppercase tracking-widest text-slate-500 font-bold mb-4">Navegación Principal</p>
+                <a href="{{ url_for('admin.dashboard') }}" class="flex items-center gap-3 p-4 rounded-2xl text-slate-400 hover:bg-white/5 hover:text-white transition-all group">
+                    <i data-lucide="layout-grid" class="w-5 h-5 group-hover:text-[#c9a84c]"></i> Dashboard General
+                </a>
+                <a href="{{ url_for('admin.reporte_inventario') }}" class="flex items-center gap-3 p-4 rounded-2xl text-slate-400 hover:bg-white/5 hover:text-white transition-all group">
+                    <i data-lucide="box" class="w-5 h-5 group-hover:text-[#c9a84c]"></i> Panel de Inventarios
+                </a>
+                <a href="{{ url_for('admin.gestion_pedidos') }}" class="flex items-center gap-3 p-4 rounded-2xl text-slate-400 hover:bg-white/5 hover:text-white transition-all group relative">
+                    <i data-lucide="shopping-cart" class="w-5 h-5 group-hover:text-[#c9a84c]"></i> Gestión de Pedidos
+                    {% if pedidos_pendientes > 0 %}<span class="notification-badge">{{ pedidos_pendientes }}</span>{% endif %}
+                </a>
+                <p class="px-4 pt-8 text-[10px] uppercase tracking-widest text-slate-500 font-bold mb-4">Gestión de Datos</p>
+                <a href="{{ url_for('admin.nuevo_producto') }}" class="flex items-center justify-between p-4 rounded-2xl text-slate-400 hover:bg-white/5 hover:text-white transition-all group">
+                    <i data-lucide="package-plus" class="w-5 h-5 group-hover:text-[#c9a84c]"></i> Productos
+                </a>
+                <a href="{{ url_for('admin.directorio') }}" class="flex items-center justify-between p-4 rounded-2xl text-slate-400 hover:bg-white/5 hover:text-white transition-all group">
+                    <i data-lucide="book-open" class="w-5 h-5 group-hover:text-[#c9a84c]"></i> Directorio Comercial
+                </a>
+                <a href="{{ url_for('admin.nuevo_vendedor') }}" class="flex items-center justify-between p-4 rounded-2xl text-slate-400 hover:bg-white/5 hover:text-white transition-all group">
+                    <i data-lucide="user-plus" class="w-5 h-5 group-hover:text-[#c9a84c]"></i> Nuevo Vendedor
+                </a>
+                <a href="{{ url_for('admin.nuevo_cliente') }}" class="flex items-center justify-between p-4 rounded-2xl text-slate-400 hover:bg-white/5 hover:text-white transition-all group">
+                    <i data-lucide="users" class="w-5 h-5 group-hover:text-[#c9a84c]"></i> Clientes
+                </a>
+            </nav>
+
+            <div class="p-6 border-t border-slate-800">
+                <div class="bg-slate-800/50 rounded-2xl p-4 border border-white/5 flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-full bg-gradient-to-br from-[#c9a84c] to-[#e8d5a3] flex items-center justify-center text-slate-900 font-bold">AD</div>
+                    <div>
+                        <p class="text-sm font-bold text-white">Administrador</p>
+                        <p class="text-[10px] text-slate-500">Sesión Activa</p>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <main class="flex-1 overflow-y-auto bg-[#f8fafc]">
+            <header class="px-10 py-8 bg-white border-b border-gray-100 flex justify-between items-center sticky top-0 z-30">
+                <div class="flex items-center gap-4">
+                    <a href="{{ url_for('admin.reporte_inventario') }}" class="p-2 rounded-full hover:bg-gray-100 transition-all">
+                        <i data-lucide="arrow-left" class="w-5 h-5 text-slate-400"></i>
+                    </a>
+                    <div>
+                        <h1 class="text-2xl font-bold text-slate-900 tracking-tight">Historial de Traslados</h1>
+                        <p class="text-xs text-slate-500 font-medium">Registro cronológico de movimientos entre almacenes</p>
+                    </div>
+                </div>
+            </header>
+
+            <div class="p-10">
+                <div class="bg-white rounded-[2.5rem] card-shadow border border-gray-100 overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-slate-50/50 text-slate-400 text-[10px] uppercase tracking-[0.15em] font-black border-b border-gray-100">
+                                    <th class="px-8 py-6">Fecha</th>
+                                    <th class="px-8 py-6">Producto</th>
+                                    <th class="px-8 py-6">Sentido / Tipo</th>
+                                    <th class="px-8 py-6">Vendedor Involucrado</th>
+                                    <th class="px-8 py-6 text-center">Cant.</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-50">
+                                {% for t in traslados %}
+                                <tr class="hover:bg-slate-50 transition-colors">
+                                    <td class="px-8 py-5 text-sm font-medium text-slate-400">{{ t.fecha.strftime('%d/%m/%Y %H:%M') }}</td>
+                                    <td class="px-8 py-5">
+                                        <p class="text-sm font-black text-slate-800">{{ t.producto.nombre }}</p>
+                                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{{ t.producto.codigo }}</p>
+                                    </td>
+                                    <td class="px-8 py-5">
+                                        <span class="px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider 
+                                            {% if 'Central ->' in t.tipo %}bg-blue-50 text-blue-600{% else %}bg-amber-50 text-amber-600{% endif %}">
+                                            {{ t.tipo }}
+                                        </span>
+                                    </td>
+                                    <td class="px-8 py-5 text-sm font-bold text-slate-700">{{ t.vendedor.nombre }}</td>
+                                    <td class="px-8 py-5 text-center text-sm font-black text-slate-900">{{ t.cantidad }}</td>
+                                </tr>
+                                {% else %}
+                                <tr>
+                                    <td colspan="5" class="px-8 py-20 text-center text-slate-400 italic">No se han registrado traslados aún.</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+    <script>lucide.createIcons();</script>
+</body>
+</html>

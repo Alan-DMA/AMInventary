@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AMInventary - Directorio Comercial</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        .sidebar-dark { background-color: #0f172a; }
+        .gold-gradient { background: linear-gradient(135deg, #c9a84c 0%, #e8d5a3 100%); }
+        .card-shadow { box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.05); }
+    </style>
+</head>
+<body class="bg-slate-50 flex h-screen overflow-hidden">
+
+    <!-- SIDEBAR -->
+    <aside class="w-72 sidebar-dark text-white flex flex-col shadow-2xl">
+        <div class="p-8 border-b border-slate-800">
+            <div class="flex items-center gap-3">
+                <img src="{{ url_for('static', filename='img/logo.png') }}" class="w-10 h-10 rounded-xl shadow-lg object-cover" onerror="this.src='https://ui-avatars.com/api/?name=AMI&background=c9a84c&color=fff'">
+                <div>
+                    <h2 class="text-xl font-bold tracking-tight">AMInventary</h2>
+                    <p class="text-[10px] uppercase tracking-[0.2em] text-slate-500 font-bold">Directorio Comercial</p>
+                </div>
+            </div>
+        </div>
+
+        <nav class="flex-1 px-4 py-8 space-y-2">
+            <p class="px-4 text-[10px] uppercase tracking-widest text-slate-500 font-bold mb-4">Navegación Principal</p>
+            
+            <a href="{{ url_for('admin.dashboard') }}" class="flex items-center gap-3 p-4 rounded-2xl text-slate-400 hover:bg-white/5 hover:text-white transition-all group">
+                <i data-lucide="layout-grid" class="w-5 h-5 group-hover:text-[#c9a84c]"></i> Dashboard General
+            </a>
+            
+            <a href="{{ url_for('admin.reporte_inventario') }}" class="flex items-center gap-3 p-4 rounded-2xl text-slate-400 hover:bg-white/5 hover:text-white transition-all group">
+                <i data-lucide="box" class="w-5 h-5 group-hover:text-[#c9a84c]"></i> Panel de Inventarios
+            </a>
+            
+            <a href="{{ url_for('admin.gestion_pedidos') }}" class="flex items-center gap-3 p-4 rounded-2xl text-slate-400 hover:bg-white/5 hover:text-white transition-all group relative">
+                <i data-lucide="shopping-cart" class="w-5 h-5 group-hover:text-[#c9a84c]"></i> Gestión de Pedidos
+                {% if pedidos_pendientes > 0 %}
+                <span class="absolute top-4 right-4 w-5 h-5 bg-rose-500 text-[10px] flex items-center justify-center rounded-full text-white font-bold border-2 border-[#0f172a]">{{ pedidos_pendientes }}</span>
+                {% endif %}
+            </a>
+
+            <p class="px-4 pt-8 text-[10px] uppercase tracking-widest text-slate-500 font-bold mb-4">Gestión de Datos</p>
+            
+            <a href="{{ url_for('admin.nuevo_producto') }}" class="flex items-center justify-between p-4 rounded-2xl text-slate-400 hover:bg-white/5 hover:text-white transition-all group">
+                <div class="flex items-center gap-3">
+                    <i data-lucide="package-plus" class="w-5 h-5 group-hover:text-[#c9a84c]"></i> Productos
+                </div>
+                <i data-lucide="plus" class="w-4 h-4 opacity-0 group-hover:opacity-100"></i>
+            </a>
+
+            <a href="{{ url_for('admin.directorio') }}" class="flex items-center gap-3 p-4 rounded-2xl bg-white/10 text-white font-medium border border-white/5 transition-all">
+                <i data-lucide="book-open" class="w-5 h-5 text-[#c9a84c]"></i> Directorio Comercial
+            </a>
+        </nav>
+
+        <div class="p-6 border-t border-slate-800">
+            <div class="bg-slate-800/50 rounded-2xl p-4 border border-white/5 flex items-center gap-3">
+                <div class="w-10 h-10 rounded-full gold-gradient flex items-center justify-center text-slate-900 font-bold">AD</div>
+                <div>
+                    <p class="text-sm font-bold text-white">Administrador</p>
+                    <p class="text-[10px] text-slate-500">Sesión Activa</p>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="flex-1 overflow-y-auto bg-[#f8fafc]">
+        <header class="px-10 py-8 bg-white border-b border-gray-100 flex justify-between items-center sticky top-0 z-30">
+            <div>
+                <h1 class="text-3xl font-extrabold text-slate-900 tracking-tight">Directorio Comercial</h1>
+                <p class="text-sm text-slate-500 mt-1">Gestión integral de vendedores y cartera de clientes</p>
+            </div>
+            <div class="flex items-center gap-4">
+                <div class="relative w-64">
+                    <span class="absolute inset-y-0 left-0 flex items-center pl-4 text-slate-400">
+                        <i data-lucide="search" class="w-4 h-4"></i>
+                    </span>
+                    <input type="text" id="dirSearch" placeholder="Buscar por nombre o zona..." 
+                        class="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:border-[#c9a84c] transition-all outline-none">
+                </div>
+                <a href="{{ url_for('admin.nuevo_vendedor') }}" id="btnHeaderAction" class="px-5 py-2.5 gold-gradient text-slate-900 font-bold text-sm rounded-xl shadow-lg hover:shadow-xl transition-all flex items-center gap-2">
+                    <i data-lucide="user-plus" class="w-4 h-4"></i> <span id="textHeaderAction">Nuevo Vendedor</span>
+                </a>
+            </div>
+        </header>
+
+        <div class="p-10 space-y-8">
+            <!-- Tabs -->
+            <div class="flex gap-4 border-b border-gray-200">
+                <button onclick="switchTab('vendedores')" id="tabVendedores" class="pb-4 px-2 text-sm font-bold text-[#c9a84c] border-b-2 border-[#c9a84c] transition-all">Vendedores ({{ vendedores|length }})</button>
+                <button onclick="switchTab('clientes')" id="tabClientes" class="pb-4 px-2 text-sm font-medium text-slate-400 hover:text-slate-600 transition-all">Clientes ({{ clientes|length }})</button>
+            </div>
+
+            <!-- VENDEDORES TABLE -->
+            <div id="viewVendedores" class="bg-white rounded-3xl card-shadow border border-gray-100 overflow-hidden">
+                <table class="w-full text-left">
+                    <thead>
+                        <tr class="bg-slate-50/50 border-b border-gray-100">
+                            <th class="px-8 py-5 text-xs font-bold text-slate-400 uppercase tracking-widest">Nombre / Usuario</th>
+                            <th class="px-8 py-5 text-xs font-bold text-slate-400 uppercase tracking-widest">Cédula</th>
+                            <th class="px-8 py-5 text-xs font-bold text-slate-400 uppercase tracking-widest">Zona / Estado</th>
+                            <th class="px-8 py-5 text-xs font-bold text-slate-400 uppercase tracking-widest text-right">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-50">
+                        {% for v in vendedores %}
+                        <tr class="hover:bg-slate-50 transition-all dir-row" data-search="{{ v.nombre.lower() }} {{ v.zona.lower() if v.zona else '' }}">
+                            <td class="px-8 py-5">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-10 h-10 rounded-full bg-amber-50 text-[#c9a84c] flex items-center justify-center font-bold">{{ v.nombre[:1] }}</div>
+                                    <div>
+                                        <p class="text-sm font-bold text-slate-800">{{ v.nombre }}</p>
+                                        <p class="text-xs text-slate-400">@{{ v.usuario }}</p>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-8 py-5 text-sm font-medium text-slate-600">{{ v.cedula }}</td>
+                            <td class="px-8 py-5">
+                                <span class="px-3 py-1 bg-slate-100 rounded-lg text-xs font-bold text-slate-600">{{ v.zona or 'No asignada' }}</span>
+                            </td>
+                            <td class="px-8 py-5 text-right">
+                                <a href="{{ url_for('admin.editar_vendedor', id=v.id) }}" class="p-2.5 rounded-xl bg-slate-50 text-slate-400 hover:bg-[#c9a84c] hover:text-white transition-all inline-flex items-center justify-center">
+                                    <i data-lucide="edit-3" class="w-4 h-4"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- CLIENTES TABLE (HIDDEN BY DEFAULT) -->
+            <div id="viewClientes" class="hidden bg-white rounded-3xl card-shadow border border-gray-100 overflow-hidden">
+                <table class="w-full text-left">
+                    <thead>
+                        <tr class="bg-slate-50/50 border-b border-gray-100">
+                            <th class="px-8 py-5 text-xs font-bold text-slate-400 uppercase tracking-widest">Cliente / RIF</th>
+                            <th class="px-8 py-5 text-xs font-bold text-slate-400 uppercase tracking-widest">Contacto</th>
+                            <th class="px-8 py-5 text-xs font-bold text-slate-400 uppercase tracking-widest">Ubicación</th>
+                            <th class="px-8 py-5 text-xs font-bold text-slate-400 uppercase tracking-widest text-right">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-50">
+                        {% for c in clientes %}
+                        <tr class="hover:bg-slate-50 transition-all dir-row" data-search="{{ c.nombre.lower() }} {{ c.estado.lower() if c.estado else '' }}">
+                            <td class="px-8 py-5">
+                                <div>
+                                    <p class="text-sm font-bold text-slate-800">{{ c.nombre }}</p>
+                                    <p class="text-xs text-slate-400">{{ c.rif }}</p>
+                                </div>
+                            </td>
+                            <td class="px-8 py-5 text-sm font-medium text-slate-600">{{ c.telefono or 'N/A' }}</td>
+                            <td class="px-8 py-5">
+                                <div class="flex flex-col">
+                                    <span class="text-xs font-bold text-slate-700">{{ c.estado or 'Desconocido' }}</span>
+                                    <span class="text-[10px] text-slate-400 truncate max-w-[200px]">{{ c.direccion }}</span>
+                                </div>
+                            </td>
+                            <td class="px-8 py-5 text-right">
+                                <a href="{{ url_for('admin.editar_cliente', id=c.id) }}" class="p-2.5 rounded-xl bg-slate-50 text-slate-400 hover:bg-[#c9a84c] hover:text-white transition-all inline-flex items-center justify-center">
+                                    <i data-lucide="edit-3" class="w-4 h-4"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        lucide.createIcons();
+
+        function switchTab(tab) {
+            const vView = document.getElementById('viewVendedores');
+            const cView = document.getElementById('viewClientes');
+            const vTab = document.getElementById('tabVendedores');
+            const cTab = document.getElementById('tabClientes');
+            const btnAction = document.getElementById('btnHeaderAction');
+            const textAction = document.getElementById('textHeaderAction');
+
+            if (tab === 'vendedores') {
+                vView.classList.remove('hidden');
+                cView.classList.add('hidden');
+                vTab.className = 'pb-4 px-2 text-sm font-bold text-[#c9a84c] border-b-2 border-[#c9a84c] transition-all';
+                cTab.className = 'pb-4 px-2 text-sm font-medium text-slate-400 hover:text-slate-600 transition-all';
+                btnAction.href = "{{ url_for('admin.nuevo_vendedor') }}";
+                textAction.innerText = "Nuevo Vendedor";
+            } else {
+                vView.classList.add('hidden');
+                cView.classList.remove('hidden');
+                cTab.className = 'pb-4 px-2 text-sm font-bold text-[#c9a84c] border-b-2 border-[#c9a84c] transition-all';
+                vTab.className = 'pb-4 px-2 text-sm font-medium text-slate-400 hover:text-slate-600 transition-all';
+                btnAction.href = "{{ url_for('admin.nuevo_cliente') }}";
+                textAction.innerText = "Nuevo Cliente";
+            }
+        }
+
+        // Real-time search
+        const searchInput = document.getElementById('dirSearch');
+        searchInput.addEventListener('input', (e) => {
+            const term = e.target.value.toLowerCase();
+            document.querySelectorAll('.dir-row').forEach(row => {
+                const searchData = row.getAttribute('data-search');
+                row.style.display = searchData.includes(term) ? '' : 'none';
+            });
+        });
+    </script>
+</body>
+</html>

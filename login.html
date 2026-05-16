@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="es" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Iniciar Sesión | AMInventary</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+    <!-- Google Fonts: Plus Jakarta Sans -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        .gold-gradient { background: linear-gradient(135deg, #c9a84c 0%, #e8d5a3 50%, #c9a84c 100%); }
+    </style>
+</head>
+<body class="h-full bg-slate-50 flex items-center justify-center p-4">
+
+    <div class="w-full max-w-md bg-white rounded-[2.5rem] p-8 shadow-2xl border border-slate-100">
+        
+        <!-- Header -->
+        <div class="text-center mb-10">
+            <div class="flex justify-center mb-6">
+                <img src="{{ url_for('static', filename='img/logo.png') }}" class="w-28 h-28 rounded-full object-cover shadow-xl border-4 border-white" onerror="this.src='https://ui-avatars.com/api/?name=AMI&background=c9a84c&color=fff&size=128'">
+            </div>
+            <h1 class="text-2xl font-black text-slate-900 tracking-tight">Bienvenido a AMI</h1>
+            <p class="text-sm font-bold text-slate-400 mt-2">Ingresa tus credenciales para continuar</p>
+        </div>
+
+        <!-- Mensajes de Feedback -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for category, message in messages %}
+              <div class="p-4 mb-6 text-sm rounded-2xl font-bold flex items-center gap-3 {% if category == 'danger' %}bg-rose-50 text-rose-600{% elif category == 'success' %}bg-emerald-50 text-emerald-600{% else %}bg-blue-50 text-blue-600{% endif %}">
+                  <i data-lucide="{% if category == 'danger' %}alert-circle{% else %}check-circle{% endif %}" class="w-5 h-5 flex-shrink-0"></i>
+                  {{ message }}
+              </div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+
+        <!-- Formulario -->
+        <form action="{{ url_for('auth.login') }}" method="POST" class="space-y-6">
+            
+            <div class="space-y-2">
+                <label class="block text-xs font-black text-slate-400 uppercase tracking-widest">Cédula o Usuario</label>
+                <div class="relative">
+                    <i data-lucide="user" class="absolute left-4 top-3.5 w-5 h-5 text-slate-400"></i>
+                    <input type="text" name="identificador" required placeholder="Ej: 27622091" 
+                           class="w-full pl-12 pr-4 py-3.5 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-2 focus:ring-[#c9a84c] outline-none text-sm font-bold text-slate-700 transition-all">
+                </div>
+            </div>
+
+            <div class="space-y-2">
+                <label class="block text-xs font-black text-slate-400 uppercase tracking-widest">Contraseña</label>
+                <div class="relative">
+                    <i data-lucide="lock" class="absolute left-4 top-3.5 w-5 h-5 text-slate-400"></i>
+                    <input type="password" name="password" required placeholder="••••••••" 
+                           class="w-full pl-12 pr-4 py-3.5 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-2 focus:ring-[#c9a84c] outline-none text-sm font-bold text-slate-700 transition-all">
+                </div>
+            </div>
+
+            <button type="submit" class="w-full gold-gradient text-white font-black uppercase tracking-widest py-4 rounded-2xl shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-transform flex items-center justify-center gap-2 mt-8">
+                <i data-lucide="log-in" class="w-5 h-5"></i>
+                <span>Iniciar Sesión</span>
+            </button>
+        </form>
+
+        <div class="mt-8 text-center">
+            <p class="text-[10px] font-bold text-slate-300 uppercase tracking-widest">AMInventary v1.0 &copy; 2026</p>
+        </div>
+
+    </div>
+
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+</html>

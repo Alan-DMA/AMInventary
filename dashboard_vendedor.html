@@ -1,0 +1,278 @@
+<!doctype html>
+<html lang="es" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Dashboard Vendedor | AMInventary</title>
+    <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+    <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        * { font-family: 'Outfit', sans-serif; -webkit-tap-highlight-color: transparent; }
+        
+        .gold-gradient { background: linear-gradient(135deg, #c9a84c 0%, #e8d5a3 50%, #c9a84c 100%); }
+        .glass-dark { background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.1); }
+        .glass-white { background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.4); }
+        
+        .card-shadow { box-shadow: 0 8px 32px rgba(0,0,0,0.06); }
+        .bottom-nav-shadow { box-shadow: 0 -10px 40px rgba(0,0,0,0.08); }
+        
+        .floating-button { 
+            position: fixed; 
+            bottom: 100px; 
+            right: 20px; 
+            width: 60px; 
+            height: 60px; 
+            border-radius: 20px; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center;
+            z-index: 40;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .floating-button:active { scale: 0.9; }
+
+        .stat-card { transition: all 0.3s ease; }
+        .stat-card:active { scale: 0.97; background: rgba(255,255,255,0.9); }
+        
+        /* Ocultar scrollbar */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="h-full bg-slate-50 text-slate-900 selection:bg-gold-200">
+    
+    <!-- CONTENEDOR MÓVIL -->
+    <div class="h-full w-full max-w-md mx-auto relative flex flex-col overflow-hidden bg-[#f8fafc]">
+        
+        <!-- HEADER PREMIUM -->
+        <header class="px-6 pt-10 pb-6 flex items-center gap-4 sticky top-0 bg-[#f8fafc]/80 backdrop-blur-md z-30">
+            <div class="w-16 h-16 rounded-[2rem] bg-white shadow-xl flex items-center justify-center p-2 border border-slate-100">
+                <img src="{{ url_for('static', filename='img/logo.png') }}" class="w-full h-full object-contain" onerror="this.src='https://ui-avatars.com/api/?name=AMI&background=c9a84c&color=fff'">
+            </div>
+            <div class="flex-1">
+                <p class="text-[10px] font-bold uppercase tracking-[0.2em] text-gold-600 mb-0.5">Bienvenida</p>
+                <h1 class="text-xl font-black tracking-tight text-slate-900 leading-none">{{ nombre_vendedor }}</h1>
+            </div>
+            <a href="/auth/logout" class="w-10 h-10 rounded-2xl bg-white border border-slate-100 shadow-sm flex items-center justify-center text-slate-400 hover:text-rose-500 hover:bg-rose-50 transition-all flex-shrink-0">
+                <i data-lucide="log-out" class="w-5 h-5"></i>
+            </a>
+        </header>
+
+        <!-- CONTENIDO SCROLLABLE -->
+        <main class="flex-1 overflow-y-auto px-6 pb-32 no-scrollbar">
+            
+            <!-- TARJETA DE BALANCE -->
+            <div class="mt-4 p-8 rounded-[3rem] glass-dark text-white shadow-2xl relative overflow-hidden group">
+                <div class="absolute -right-10 -top-10 w-40 h-40 bg-gold-400 rounded-full blur-[60px] opacity-20 group-hover:opacity-40 transition-opacity"></div>
+                <div class="relative z-10 text-center">
+                    <span class="text-[10px] font-bold uppercase tracking-[0.3em] opacity-60">Comisiones Acumuladas</span>
+                    <div class="mt-4 flex items-center justify-center gap-2">
+                        <span class="text-5xl font-black tracking-tighter">${{ comisiones }}</span>
+                    </div>
+                    <div class="mt-2 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-400 text-[10px] font-black uppercase tracking-wider">
+                        <i data-lucide="trending-up" class="w-3 h-3"></i>
+                        Creciendo hoy
+                    </div>
+                </div>
+            </div>
+
+            <!-- GRÁFICOS DE RENDIMIENTO -->
+            <div class="mt-10 space-y-8">
+                <!-- Top Productos -->
+                <section>
+                    <div class="flex items-center gap-2 mb-4">
+                        <div class="w-1 h-4 bg-gold-500 rounded-full"></div>
+                        <h2 class="text-xs font-black text-slate-800 uppercase tracking-widest">Top 3 Productos</h2>
+                    </div>
+                    <div class="bg-white p-6 rounded-[2.5rem] shadow-xl shadow-slate-200/50">
+                        <div id="chart-top-productos"></div>
+                    </div>
+                </section>
+
+                <!-- Top Clientes -->
+                <section>
+                    <div class="flex items-center gap-2 mb-4">
+                        <div class="w-1 h-4 bg-blue-500 rounded-full"></div>
+                        <h2 class="text-xs font-black text-slate-800 uppercase tracking-widest">Mejores Clientes</h2>
+                    </div>
+                    <div class="bg-white p-6 rounded-[2.5rem] shadow-xl shadow-slate-200/50">
+                        <div id="chart-top-clientes" class="flex justify-center"></div>
+                    </div>
+                </section>
+            </div>
+
+            <!-- ALERTAS DE INVENTARIO (LOW STOCK) -->
+            <div class="mt-10">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xs font-black text-slate-800 uppercase tracking-widest">Por agotar (Maletín)</h2>
+                </div>
+                <div class="grid grid-cols-1 gap-3">
+                    {% for item in stock_bajo %}
+                    <div class="bg-white p-4 rounded-3xl border border-slate-100 flex items-center justify-between shadow-sm">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-xl {% if item.cantidad < 5 %}bg-rose-50 text-rose-500{% else %}bg-amber-50 text-amber-500{% endif %} flex items-center justify-center">
+                                <i data-lucide="alert-triangle" class="w-5 h-5"></i>
+                            </div>
+                            <div>
+                                <p class="text-sm font-bold text-slate-800">{{ item.producto.nombre }}</p>
+                                <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{{ item.cantidad }} unidades restantes</p>
+                            </div>
+                        </div>
+                        <a href="/vendedor/inventario" class="p-2 bg-slate-50 rounded-full text-slate-300"><i data-lucide="chevron-right" class="w-4 h-4"></i></a>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- ACTIVIDAD CON ESTADOS -->
+            <div class="mt-10">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xs font-black text-slate-800 uppercase tracking-widest">Actividad Reciente</h2>
+                    <a href="/vendedor/reporte_ventas" class="text-[10px] font-black text-gold-600 uppercase tracking-widest">Ver Historial</a>
+                </div>
+                <div class="space-y-4">
+                    {% for v in actividad %}
+                    <div class="flex items-center gap-4 p-3 bg-white rounded-3xl border border-slate-50 shadow-sm relative group">
+                        
+                        {% if v.estado == 'En espera' %}
+                        <!-- Botón Editar Flotante -->
+                        <a href="/vendedor/editar_factura/{{ v.codigo_factura }}" class="absolute -top-2 -right-2 w-8 h-8 rounded-full bg-amber-500 text-white shadow-lg flex items-center justify-center hover:scale-110 transition-transform z-10">
+                            <i data-lucide="pencil" class="w-4 h-4"></i>
+                        </a>
+                        {% endif %}
+
+                        <div class="w-2 h-8 rounded-full {% if v.estado == 'Procesada' %}bg-emerald-500{% elif v.estado == 'En espera' %}bg-amber-500{% else %}bg-rose-500{% endif %}"></div>
+                        <div class="flex-1">
+                            <p class="text-sm font-bold text-slate-800">{{ v.cliente.nombre }}</p>
+                            <div class="flex items-center gap-2">
+                                <p class="text-[9px] text-slate-400 font-bold uppercase tracking-widest">{{ v.fecha.strftime('%d %b, %H:%M') }}</p>
+                                <span class="text-[8px] font-black uppercase px-1.5 py-0.5 rounded-md {% if v.estado == 'Procesada' %}bg-emerald-50 text-emerald-600{% elif v.estado == 'En espera' %}bg-amber-50 text-amber-600{% else %}bg-rose-50 text-rose-600{% endif %}">{{ v.estado }}</span>
+                            </div>
+                        </div>
+                        <div class="flex flex-col items-end pr-2">
+                            <span class="text-sm font-black text-slate-900">${{ "{:,.2f}".format(v.total) }}</span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </main>
+
+
+
+        <!-- BOTTOM NAV -->
+        <nav class="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-white/90 backdrop-blur-xl border-t border-slate-100 px-8 py-4 flex justify-between items-center bottom-nav-shadow z-50 rounded-t-[2.5rem]">
+            <a href="/vendedor/dashboard" class="flex flex-col items-center gap-1 text-gold-600">
+                <i data-lucide="layout-grid" class="w-6 h-6"></i>
+                <span class="text-[8px] font-black uppercase tracking-widest">Inicio</span>
+            </a>
+            <a href="/vendedor/inventario" class="flex flex-col items-center gap-1 text-slate-300 hover:text-slate-600 transition-colors">
+                <i data-lucide="package" class="w-6 h-6"></i>
+                <span class="text-[8px] font-black uppercase tracking-widest">Stock</span>
+            </a>
+            <a href="/vendedor/reporte_ventas" class="flex flex-col items-center gap-1 text-slate-300 hover:text-slate-600 transition-colors">
+                <i data-lucide="file-text" class="w-6 h-6"></i>
+                <span class="text-[8px] font-black uppercase tracking-widest">Ventas</span>
+            </a>
+            <a href="/vendedor/nueva_venta" class="flex flex-col items-center gap-1 text-slate-300 hover:text-gold-600 transition-colors">
+                <i data-lucide="plus-circle" class="w-6 h-6"></i>
+                <span class="text-[8px] font-black uppercase tracking-widest">Nueva</span>
+            </a>
+        </nav>
+    </div>
+    
+    <!-- ApexCharts CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+
+    <script>
+        lucide.createIcons();
+
+        // Datos inyectados desde el backend
+        const topProductos = {{ top_productos | tojson }};
+        const topClientes = {{ top_clientes | tojson }};
+
+        // Gráfico Top 3 Productos (Columna Vertical)
+        if(topProductos.length > 0) {
+            const prodLabels = topProductos.map(p => p[0]);
+            const prodData = topProductos.map(p => p[1]);
+
+            var optionsProd = {
+                series: [{
+                    name: 'Unidades Vendidas',
+                    data: prodData
+                }],
+                chart: {
+                    type: 'bar',
+                    height: 220,
+                    toolbar: { show: false },
+                    fontFamily: 'Plus Jakarta Sans, sans-serif'
+                },
+                plotOptions: {
+                    bar: {
+                        horizontal: false,
+                        columnWidth: '55%',
+                        borderRadius: 8,
+                    }
+                },
+                dataLabels: { enabled: false },
+                stroke: { show: true, width: 2, colors: ['transparent'] },
+                colors: ['#c9a84c'],
+                xaxis: {
+                    categories: prodLabels,
+                    labels: { style: { colors: '#94a3b8', fontSize: '10px', fontWeight: 800 } }
+                },
+                yaxis: {
+                    labels: { style: { colors: '#475569', fontSize: '11px', fontWeight: 800 } }
+                },
+                grid: { borderColor: '#f1f1f1' },
+                fill: { opacity: 1 }
+            };
+            var chartProd = new ApexCharts(document.querySelector("#chart-top-productos"), optionsProd);
+            chartProd.render();
+        }
+
+        // Gráfico Top Clientes (Columna Vertical)
+        if(topClientes.length > 0) {
+            const cliLabels = topClientes.map(c => c[0]);
+            const cliData = topClientes.map(c => c[1]);
+
+            var optionsCli = {
+                series: [{
+                    name: 'Pedidos Realizados',
+                    data: cliData
+                }],
+                chart: {
+                    type: 'bar',
+                    height: 220,
+                    toolbar: { show: false },
+                    fontFamily: 'Plus Jakarta Sans, sans-serif'
+                },
+                plotOptions: {
+                    bar: {
+                        horizontal: false,
+                        columnWidth: '55%',
+                        borderRadius: 8,
+                    }
+                },
+                dataLabels: { enabled: false },
+                stroke: { show: true, width: 2, colors: ['transparent'] },
+                colors: ['#3b82f6'],
+                xaxis: {
+                    categories: cliLabels,
+                    labels: { style: { colors: '#94a3b8', fontSize: '10px', fontWeight: 800 } }
+                },
+                yaxis: {
+                    labels: { style: { colors: '#475569', fontSize: '11px', fontWeight: 800 } }
+                },
+                grid: { borderColor: '#f1f1f1' },
+                fill: { opacity: 1 }
+            };
+            var chartCli = new ApexCharts(document.querySelector("#chart-top-clientes"), optionsCli);
+            chartCli.render();
+        }
+
+    </script>
+</body>
+</html>
