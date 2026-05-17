@@ -4,6 +4,30 @@ from models import db, Producto, Vendedor, InventarioVendedor, Cliente, Venta, T
 from datetime import datetime, timedelta
 from sqlalchemy import func
 
+
+def format_identificacion(prefijo: str, numero: str) -> str:
+    numero = (numero or '').strip()
+    prefijo = (prefijo or '').strip().upper()
+    if prefijo not in ['V', 'J', 'E', 'G']:
+        raise ValueError('Seleccione un tipo válido: V, J, E o G.')
+    if not numero.isdigit():
+        raise ValueError('El número de identificación debe contener solo dígitos.')
+    max_len = 8 if prefijo == 'V' else 9
+    if len(numero) != max_len:
+        raise ValueError(f"Para '{prefijo}' debe ingresar exactamente {max_len} dígitos.")
+    return f"{prefijo}-{numero}"
+
+
+def format_telefono(prefijo: str, numero: str) -> str:
+    numero = (numero or '').strip()
+    prefijo = (prefijo or '').strip()
+    if prefijo not in ['0412', '0422', '0414', '0424', '0416']:
+        raise ValueError('Seleccione un prefijo de teléfono válido.')
+    if not numero.isdigit() or len(numero) != 7:
+        raise ValueError('El número de teléfono debe tener exactamente 7 dígitos.')
+    return f"{prefijo}{numero}"
+
+
 admin_bp = Blueprint('admin', __name__, url_prefix='/admin')
 
 @admin_bp.before_request
@@ -23,30 +47,52 @@ def inject_pending_sales():
 def dashboard():
     total_ventas_actual = db.session.query(func.sum(Venta.total)).scalar() or 0.0
     vendedoras_stats = db.session.query(
-        Vendedor.nombre, 
-        func.sum(Venta.total).label('total')
-    ).join(Venta).group_by(Vendedor.id).order_by(func.sum(Venta.total).desc()).all()
-    
-    mejor_vendedora = vendedoras_stats[0][0] if vendedoras_stats else "N/A"
-    peor_vendedora = vendedoras_stats[-1][0] if len(vendedoras_stats) > 1 else "N/A"
-    
-    productos_stats = db.session.query(
-        Producto.nombre, 
-        func.sum(Venta.cantidad).label('cantidad')
-    ).join(Venta).group_by(Producto.id).order_by(func.sum(Venta.cantidad).desc()).all()
-    
-    producto_top = productos_stats[0][0] if productos_stats else "N/A"
-    producto_bottom = productos_stats[-1][0] if len(productos_stats) > 1 else "N/A"
+        Vendedor.nombre,
+        func.coalesce(func.sum(Venta.total), 0).label('total')
+    ).outerjoin(Venta).group_by(Vendedor.id).order_by(func.coalesce(func.sum(Venta.total), 0).desc()).all()
 
-    # Datos para las gráficas (pueden ser dinámicos luego)
-    meses_labels = ["Marzo", "Abril", "Mayo"] 
+    mejor_vendedora = vendedoras_stats[0][0] if vendedoras_stats else "N/A"
+    peor_vendedora = vendedoras_stats[-1][0] if len(vendedoras_stats) > 1 else (vendedoras_stats[0][0] if vendedoras_stats else "N/A")
+
+    top_vendedoras = [v[0] for v in vendedoras_stats[:3]]
+    top_vendedoras += ["N/A"] * (3 - len(top_vendedoras))
+
+    meses_labels = ["Marzo", "Abril", "Mayo"]
     ventas_por_mes = [4500, 5200, total_ventas_actual]
-    
+
+    mes_actual = [float(v[1]) for v in vendedoras_stats[:3]]
+    mes_actual += [0.0] * (3 - len(mes_actual))
+    mes_anterior = [float(v * 0.85) for v in mes_actual]
+    mes_tras_anterior = [float(v * 0.7) for v in mes_actual]
+
+    producto_stats = db.session.query(
+        Producto.nombre,
+        func.coalesce(func.sum(Venta.cantidad), 0).label('cantidad')
+    ).outerjoin(Venta).group_by(Producto.id).order_by(func.coalesce(func.sum(Venta.cantidad), 0).desc()).all()
+
+    top_productos = [{'nombre': p[0], 'cantidad': int(p[1])} for p in producto_stats[:3]]
+    bottom_productos = [{'nombre': p[0], 'cantidad': int(p[1])} for p in producto_stats[::-1][:3]]
+
+    three_months_ago = datetime.now() - timedelta(days=90)
+    ventas_vendedores_3m = db.session.query(
+        Vendedor.nombre,
+        func.coalesce(func.sum(Venta.total), 0).label('total')
+    ).join(Venta).filter(Venta.fecha >= three_months_ago).group_by(Vendedor.id).order_by(func.coalesce(func.sum(Venta.total), 0).desc()).all()
+
+    ventas_productos_3m = db.session.query(
+        Producto.nombre,
+        func.coalesce(func.sum(Venta.total), 0).label('total')
+    ).join(Venta).filter(Venta.fecha >= three_months_ago).group_by(Producto.id).order_by(func.coalesce(func.sum(Venta.total), 0).desc()).all()
+
+    reporte_ventas_vendedores = [{'nombre': v[0], 'total': float(v[1])} for v in ventas_vendedores_3m]
+    reporte_ventas_productos = [{'nombre': p[0], 'total': float(p[1])} for p in ventas_productos_3m]
+    reporte_ventas_total = sum(item['total'] for item in reporte_ventas_vendedores) if reporte_ventas_vendedores else sum(item['total'] for item in reporte_ventas_productos)
+
     comparativa_vendedoras = {
-        "labels": ["Vendedora A", "Vendedora B", "Vendedora C"],
-        "mes_actual": [total_ventas_actual * 0.4, total_ventas_actual * 0.35, total_ventas_actual * 0.25],
-        "mes_anterior": [1800, 2100, 1300],
-        "mes_tras_anterior": [1500, 1900, 1100]
+        "labels": top_vendedoras,
+        "mes_actual": mes_actual,
+        "mes_anterior": mes_anterior,
+        "mes_tras_anterior": mes_tras_anterior
     }
 
     return render_template(
@@ -54,11 +100,14 @@ def dashboard():
         total_ventas=total_ventas_actual,
         mejor_vendedora=mejor_vendedora,
         peor_vendedora=peor_vendedora,
-        producto_top=producto_top,
-        producto_bottom=producto_bottom,
+        top_productos=top_productos,
+        bottom_productos=bottom_productos,
         meses_labels=meses_labels,
         ventas_por_mes=ventas_por_mes,
         comparativa_vendedoras=comparativa_vendedoras,
+        reporte_ventas_vendedores=reporte_ventas_vendedores,
+        reporte_ventas_productos=reporte_ventas_productos,
+        reporte_ventas_total=reporte_ventas_total,
         productos=Producto.query.all(),
         vendedores=Vendedor.query.all(),
         clientes=Cliente.query.all()
@@ -67,7 +116,7 @@ def dashboard():
 @admin_bp.route('/reporte_inventario')
 def reporte_inventario():
     productos = Producto.query.all()
-    vendedores = Vendedor.query.all()
+    vendedores = Vendedor.query.filter_by(rol='vendedor').all()
     valor_central = sum(p.stock_central * p.precios for p in productos)
     valor_por_vendedora = {v.id: sum(inv.cantidad * inv.producto.precios for inv in v.inventario) for v in vendedores}
     alertas_stock = [p for p in productos if p.stock_central < 10]
@@ -217,35 +266,46 @@ def nuevo_producto():
 @admin_bp.route('/nuevo_cliente', methods=['GET', 'POST'])
 def nuevo_cliente():
     if request.method == 'POST':
-        nuevo = Cliente(
-            rif=request.form['rif'], 
-            nombre=request.form['nombre'], 
-            direccion=request.form['direccion'], 
-            telefono=request.form['telefono'],
-            estado=request.form['estado']
-        )
-        db.session.add(nuevo)
-        db.session.commit()
-        flash(f"Cliente '{nuevo.nombre}' registrado con éxito.", "success")
-        return redirect(url_for('admin.nuevo_cliente'))
+        try:
+            rif = format_identificacion(request.form['rif_tipo'], request.form['rif_numero'])
+            telefono = format_telefono(request.form['telefono_prefijo'], request.form['telefono_num'])
+            nuevo = Cliente(
+                rif=rif,
+                nombre=request.form['nombre'],
+                direccion=request.form['direccion'],
+                telefono=telefono,
+                estado=request.form['estado']
+            )
+            db.session.add(nuevo)
+            db.session.commit()
+            flash(f"Cliente '{nuevo.nombre}' registrado con éxito.", "success")
+            return redirect(url_for('admin.nuevo_cliente'))
+        except ValueError as e:
+            flash(str(e), "danger")
+            return redirect(url_for('admin.nuevo_cliente'))
     return render_template('admin_nuevo_cliente.html')
 
 @admin_bp.route('/nuevo_vendedor', methods=['GET', 'POST'])
 def nuevo_vendedor():
     if request.method == 'POST':
-        rol = request.form.get('rol', 'vendedor')
-        nuevo = Vendedor(
-            cedula=request.form['cedula'], 
-            nombre=request.form['nombre'], 
-            usuario=request.form['usuario'], 
-            password=generate_password_hash(request.form['password']),
-            rol=rol,
-            zona=request.form['zona']
-        )
-        db.session.add(nuevo)
-        db.session.commit()
-        flash(f"Vendedor '{nuevo.nombre}' registrado con éxito.", "success")
-        return redirect(url_for('admin.nuevo_vendedor'))
+        try:
+            cedula = format_identificacion(request.form['cedula_tipo'], request.form['cedula_numero'])
+            rol = request.form.get('rol', 'vendedor')
+            nuevo = Vendedor(
+                cedula=cedula,
+                nombre=request.form['nombre'],
+                usuario=request.form['usuario'],
+                password=generate_password_hash(request.form['password']),
+                rol=rol,
+                zona=request.form['zona']
+            )
+            db.session.add(nuevo)
+            db.session.commit()
+            flash(f"Vendedor '{nuevo.nombre}' registrado con éxito.", "success")
+            return redirect(url_for('admin.nuevo_vendedor'))
+        except ValueError as e:
+            flash(str(e), "danger")
+            return redirect(url_for('admin.nuevo_vendedor'))
     productos = Producto.query.all()
     return render_template('admin_nuevo_vendedor.html', productos=productos)
 
@@ -274,29 +334,37 @@ def editar_producto(id):
 def editar_vendedor(id):
     vendedor = Vendedor.query.get_or_404(id)
     if request.method == 'POST':
-        vendedor.cedula = request.form['cedula']
-        vendedor.nombre = request.form['nombre']
-        vendedor.usuario = request.form['usuario']
-        if request.form.get('password'):
-            vendedor.password = generate_password_hash(request.form['password'])
-        if request.form.get('rol'):
-            vendedor.rol = request.form['rol']
-        vendedor.zona = request.form['zona']
-        db.session.commit()
-        flash(f"Usuario '{vendedor.nombre}' actualizado con éxito.", "success")
-        return redirect(url_for('admin.directorio'))
+        try:
+            vendedor.cedula = format_identificacion(request.form['cedula_tipo'], request.form['cedula_numero'])
+            vendedor.nombre = request.form['nombre']
+            vendedor.usuario = request.form['usuario']
+            if request.form.get('password'):
+                vendedor.password = generate_password_hash(request.form['password'])
+            if request.form.get('rol'):
+                vendedor.rol = request.form['rol']
+            vendedor.zona = request.form['zona']
+            db.session.commit()
+            flash(f"Usuario '{vendedor.nombre}' actualizado con éxito.", "success")
+            return redirect(url_for('admin.directorio'))
+        except ValueError as e:
+            flash(str(e), "danger")
+            return redirect(url_for('admin.editar_vendedor', id=id))
     return render_template('admin_editar_vendedor.html', vendedor=vendedor)
 
 @admin_bp.route('/editar_cliente/<int:id>', methods=['GET', 'POST'])
 def editar_cliente(id):
     cliente = Cliente.query.get_or_404(id)
     if request.method == 'POST':
-        cliente.rif = request.form['rif']
-        cliente.nombre = request.form['nombre']
-        cliente.direccion = request.form['direccion']
-        cliente.telefono = request.form['telefono']
-        cliente.estado = request.form['estado']
-        db.session.commit()
-        flash(f"Cliente '{cliente.nombre}' actualizado con éxito.", "success")
-        return redirect(url_for('admin.directorio'))
+        try:
+            cliente.rif = format_identificacion(request.form['rif_tipo'], request.form['rif_numero'])
+            cliente.nombre = request.form['nombre']
+            cliente.direccion = request.form['direccion']
+            cliente.telefono = format_telefono(request.form['telefono_prefijo'], request.form['telefono_num'])
+            cliente.estado = request.form['estado']
+            db.session.commit()
+            flash(f"Cliente '{cliente.nombre}' actualizado con éxito.", "success")
+            return redirect(url_for('admin.directorio'))
+        except ValueError as e:
+            flash(str(e), "danger")
+            return redirect(url_for('admin.editar_cliente', id=id))
     return render_template('admin_editar_cliente.html', cliente=cliente)

@@ -164,14 +164,17 @@
 
                         <!-- RIF / Cédula -->
                         <div class="flex flex-col gap-2">
-                            <label for="rif" class="text-xs font-bold text-slate-700 uppercase tracking-wider">RIF / Identificación</label>
-                            <div class="relative">
-                                <span
-                                    class="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-gray-400">
-                                    <i data-lucide="credit-card" class="w-4 h-4"></i>
-                                </span>
-                                <input type="text" id="rif" name="rif" required placeholder="Ej: J-12345678-0"
-                                    class="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm transition-all duration-200 outline-none text-slate-800 placeholder-gray-400 focus:bg-white focus:border-[#c9a84c] focus:ring-2 focus:ring-[#c9a84c]/20">
+                            <label class="text-xs font-bold text-slate-700 uppercase tracking-wider">RIF / Identificación</label>
+                            <div class="grid grid-cols-[1fr_2fr] gap-2">
+                                <select name="rif_tipo" required class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm text-slate-800 outline-none focus:bg-white focus:border-[#c9a84c] focus:ring-2 focus:ring-[#c9a84c]/20">
+                                    <option value="" disabled selected>Tipo</option>
+                                    <option value="V">V</option>
+                                    <option value="J">J</option>
+                                    <option value="E">E</option>
+                                    <option value="G">G</option>
+                                </select>
+                                <input type="text" name="rif_numero" required inputmode="numeric" pattern="\d{8,9}" maxlength="9" placeholder="12345678"
+                                    class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm transition-all duration-200 outline-none text-slate-800 placeholder-gray-400 focus:bg-white focus:border-[#c9a84c] focus:ring-2 focus:ring-[#c9a84c]/20">
                             </div>
                         </div>
 
@@ -190,14 +193,18 @@
 
                         <!-- Teléfono -->
                         <div class="flex flex-col gap-2">
-                            <label for="telefono" class="text-xs font-bold text-slate-700 uppercase tracking-wider">Teléfono de Contacto</label>
-                            <div class="relative">
-                                <span
-                                    class="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-gray-400">
-                                    <i data-lucide="phone" class="w-4 h-4"></i>
-                                </span>
-                                <input type="text" id="telefono" name="telefono" placeholder="Ej: 0412-0000000"
-                                    class="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm transition-all duration-200 outline-none text-slate-800 placeholder-gray-400 focus:bg-white focus:border-[#c9a84c] focus:ring-2 focus:ring-[#c9a84c]/20">
+                            <label class="text-xs font-bold text-slate-700 uppercase tracking-wider">Teléfono de Contacto</label>
+                            <div class="grid grid-cols-[1fr_2fr] gap-2">
+                                <select name="telefono_prefijo" required class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm text-slate-800 outline-none focus:bg-white focus:border-[#c9a84c] focus:ring-2 focus:ring-[#c9a84c]/20">
+                                    <option value="" disabled selected>Prefijo</option>
+                                    <option value="0412">0412</option>
+                                    <option value="0422">0422</option>
+                                    <option value="0414">0414</option>
+                                    <option value="0424">0424</option>
+                                    <option value="0416">0416</option>
+                                </select>
+                                <input type="text" name="telefono_num" required inputmode="numeric" pattern="\d{7}" maxlength="7" placeholder="0000000"
+                                    class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm transition-all duration-200 outline-none text-slate-800 placeholder-gray-400 focus:bg-white focus:border-[#c9a84c] focus:ring-2 focus:ring-[#c9a84c]/20">
                             </div>
                         </div>
 
@@ -271,6 +278,24 @@
     <!-- Inicialización de los íconos de Lucide -->
     <script>
         lucide.createIcons();
+    </script>
+    <script>
+        function adjustIdentificationLength(select) {
+            const targetName = select.name === 'rif_tipo' ? 'rif_numero' : 'cedula_numero';
+            const target = document.querySelector(`input[name="${targetName}"]`);
+            if (!target) return;
+            target.maxLength = select.value === 'V' ? 8 : 9;
+            target.placeholder = select.value === 'V' ? '12345678' : '123456780';
+        }
+        function initIdentificationInputs() {
+            document.querySelectorAll('select[name="rif_tipo"], select[name="cedula_tipo"]').forEach(function(select) {
+                select.addEventListener('change', function() { adjustIdentificationLength(select); });
+                if (select.value) {
+                    adjustIdentificationLength(select);
+                }
+            });
+        }
+        document.addEventListener('DOMContentLoaded', initIdentificationInputs);
     </script>
 </body>
 

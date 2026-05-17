@@ -49,11 +49,32 @@
                 <div class="grid grid-cols-2 gap-6">
                     <div class="flex flex-col gap-2">
                         <label class="text-xs font-bold text-slate-700 uppercase tracking-wider">RIF / Identificación</label>
-                        <input type="text" name="rif" value="{{ cliente.rif }}" required class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:bg-white focus:border-[#c9a84c] outline-none transition-all">
+                        <div class="grid grid-cols-[1fr_2fr] gap-2">
+                            <select name="rif_tipo" required class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:bg-white focus:border-[#c9a84c] outline-none transition-all appearance-none">
+                                <option value="" disabled {% if not cliente.rif %}selected{% endif %}>Tipo</option>
+                                <option value="V" {% if cliente.rif.split('-')[0] == 'V' %}selected{% endif %}>V</option>
+                                <option value="J" {% if cliente.rif.split('-')[0] == 'J' %}selected{% endif %}>J</option>
+                                <option value="E" {% if cliente.rif.split('-')[0] == 'E' %}selected{% endif %}>E</option>
+                                <option value="G" {% if cliente.rif.split('-')[0] == 'G' %}selected{% endif %}>G</option>
+                            </select>
+                            <input type="text" name="rif_numero" required inputmode="numeric" pattern="\d{8,9}" maxlength="{{ 8 if cliente.rif.split('-')[0] == 'V' else 9 }}" value="{{ cliente.rif.split('-')[1] }}"
+                                class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:bg-white focus:border-[#c9a84c] outline-none transition-all">
+                        </div>
                     </div>
                     <div class="flex flex-col gap-2">
                         <label class="text-xs font-bold text-slate-700 uppercase tracking-wider">Teléfono</label>
-                        <input type="text" name="telefono" value="{{ cliente.telefono }}" required class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:bg-white focus:border-[#c9a84c] outline-none transition-all">
+                        <div class="grid grid-cols-[1fr_2fr] gap-2">
+                            <select name="telefono_prefijo" required class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:bg-white focus:border-[#c9a84c] outline-none transition-all appearance-none">
+                                <option value="" disabled {% if not cliente.telefono %}selected{% endif %}>Prefijo</option>
+                                <option value="0412" {% if cliente.telefono[:4] == '0412' %}selected{% endif %}>0412</option>
+                                <option value="0422" {% if cliente.telefono[:4] == '0422' %}selected{% endif %}>0422</option>
+                                <option value="0414" {% if cliente.telefono[:4] == '0414' %}selected{% endif %}>0414</option>
+                                <option value="0424" {% if cliente.telefono[:4] == '0424' %}selected{% endif %}>0424</option>
+                                <option value="0416" {% if cliente.telefono[:4] == '0416' %}selected{% endif %}>0416</option>
+                            </select>
+                            <input type="text" name="telefono_num" required inputmode="numeric" pattern="\d{7}" maxlength="7" value="{{ cliente.telefono[4:] }}"
+                                class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:bg-white focus:border-[#c9a84c] outline-none transition-all">
+                        </div>
                     </div>
                     <div class="flex flex-col gap-2 col-span-2">
                         <label class="text-xs font-bold text-slate-700 uppercase tracking-wider">Nombre / Razón Social</label>
@@ -105,5 +126,26 @@
     </main>
 
     <script>lucide.createIcons();</script>
+<script>
+function adjustIdentificationLength(select) {
+    const targetName = select.name === 'rif_tipo' ? 'rif_numero' : 'cedula_numero';
+    const target = document.querySelector(`input[name="${targetName}"]`);
+    if (!target) return;
+
+    target.maxLength = select.value === 'V' ? 8 : 9;
+    target.placeholder = select.value === 'V' ? '12345678' : '123456780';
+}
+
+function initIdentificationInputs() {
+    document.querySelectorAll('select[name="rif_tipo"], select[name="cedula_tipo"]').forEach(function(select) {
+        select.addEventListener('change', function() { adjustIdentificationLength(select); });
+        if (select.value) {
+            adjustIdentificationLength(select);
+        }
+    });
+}
+
+document.addEventListener('DOMContentLoaded', initIdentificationInputs);
+</script>
 </body>
 </html>

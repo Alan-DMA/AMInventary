@@ -160,14 +160,17 @@
 
                         <!-- Cédula de Identidad -->
                         <div class="flex flex-col gap-2">
-                            <label for="cedula" class="text-xs font-bold text-slate-700 uppercase tracking-wider">Cédula de Identidad</label>
-                            <div class="relative">
-                                <span
-                                    class="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-gray-400">
-                                    <i data-lucide="id-card" class="w-4 h-4"></i>
-                                </span>
-                                <input type="text" id="cedula" name="cedula" required placeholder="Ej: V-20123456"
-                                    class="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm transition-all duration-200 outline-none text-slate-800 placeholder-gray-400 focus:bg-white focus:border-[#c9a84c] focus:ring-2 focus:ring-[#c9a84c]/20">
+                            <label class="text-xs font-bold text-slate-700 uppercase tracking-wider">Cédula de Identidad</label>
+                            <div class="grid grid-cols-[1fr_2fr] gap-2">
+                                <select name="cedula_tipo" required class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm text-slate-800 outline-none focus:bg-white focus:border-[#c9a84c] focus:ring-2 focus:ring-[#c9a84c]/20">
+                                    <option value="" disabled selected>Tipo</option>
+                                    <option value="V">V</option>
+                                    <option value="J">J</option>
+                                    <option value="E">E</option>
+                                    <option value="G">G</option>
+                                </select>
+                                <input type="text" name="cedula_numero" required inputmode="numeric" pattern="\d{8,9}" maxlength="9" placeholder="12345678"
+                                    class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm transition-all duration-200 outline-none text-slate-800 placeholder-gray-400 focus:bg-white focus:border-[#c9a84c] focus:ring-2 focus:ring-[#c9a84c]/20">
                             </div>
                         </div>
 
@@ -269,6 +272,24 @@
     <!-- Inicialización de los íconos de Lucide -->
     <script>
         lucide.createIcons();
+    </script>
+    <script>
+        function adjustIdentificationLength(select) {
+            const targetName = select.name === 'rif_tipo' ? 'rif_numero' : 'cedula_numero';
+            const target = document.querySelector(`input[name="${targetName}"]`);
+            if (!target) return;
+            target.maxLength = select.value === 'V' ? 8 : 9;
+            target.placeholder = select.value === 'V' ? '12345678' : '123456780';
+        }
+        function initIdentificationInputs() {
+            document.querySelectorAll('select[name="rif_tipo"], select[name="cedula_tipo"]').forEach(function(select) {
+                select.addEventListener('change', function() { adjustIdentificationLength(select); });
+                if (select.value) {
+                    adjustIdentificationLength(select);
+                }
+            });
+        }
+        document.addEventListener('DOMContentLoaded', initIdentificationInputs);
     </script>
 </body>
 

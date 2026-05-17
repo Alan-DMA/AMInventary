@@ -60,6 +60,21 @@
                 </div>
 
                 <!-- SECCIÓN PRODUCTOS DINÁMICOS -->
+                <!-- ORIGEN DEL STOCK -->
+                <div class="space-y-2">
+                    <label class="block text-sm font-bold text-slate-700">Origen del stock</label>
+                    <div class="flex items-center gap-4">
+                        <label class="inline-flex items-center gap-2">
+                            <input type="radio" name="origen" value="maletin" checked />
+                            <span class="text-sm font-medium">Maletín (Mi almacén)</span>
+                        </label>
+                        <label class="inline-flex items-center gap-2">
+                            <input type="radio" name="origen" value="bta" />
+                            <span class="text-sm font-medium">BTA (Almacén Central)</span>
+                        </label>
+                    </div>
+                </div>
+
                 <div class="space-y-4">
                     <label class="block text-sm font-bold text-slate-700">Productos del Pedido</label>
                     
@@ -101,7 +116,7 @@
 
                     <datalist id="productos_list">
                         {% for producto in lista_productos %}
-                        <option value="{{ producto.nombre }} | ${{ producto.precios }}">
+                        <option value="{{ producto.nombre }}">
                         {% endfor %}
                     </datalist>
 

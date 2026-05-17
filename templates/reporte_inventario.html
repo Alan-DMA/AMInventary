@@ -119,32 +119,47 @@
             <div class="p-10 space-y-8">
                 
                 <!-- FILTROS AVANZADOS -->
-                <div class="bg-white p-6 rounded-3xl card-shadow border border-gray-100 flex flex-wrap items-center gap-6">
-                    <div class="flex-1 min-w-[200px]">
-                        <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 block">Buscar Producto</label>
-                        <div class="relative">
-                            <i data-lucide="search" class="absolute left-3 top-3 w-4 h-4 text-slate-300"></i>
-                            <input type="text" id="filterProducto" onkeyup="applyFilters()" placeholder="Nombre o Código..." class="pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-100 rounded-xl text-sm w-full outline-none focus:ring-2 focus:ring-blue-500 transition-all">
+                <div class="bg-white p-6 rounded-3xl card-shadow border border-gray-100 space-y-6">
+                    <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+                        <div class="lg:col-span-2">
+                            <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 block">Buscar Producto</label>
+                            <div class="relative">
+                                <i data-lucide="search" class="absolute left-3 top-3 w-4 h-4 text-slate-300"></i>
+                                <input type="text" id="filterProducto" onkeyup="applyFilters()" placeholder="Nombre o Código..." class="pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-100 rounded-xl text-sm w-full outline-none focus:ring-2 focus:ring-blue-500 transition-all">
+                            </div>
                         </div>
-                    </div>
-                    <div class="w-48">
-                        <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 block">Categoría</label>
-                        <select id="filterCategoria" onchange="applyFilters()" class="w-full px-4 py-2.5 bg-gray-50 border border-gray-100 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500">
-                            <option value="all">Todas</option>
-                            {% for cat in productos|map(attribute='categoria')|unique %}
-                            <option value="{{ cat }}">{{ cat }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <div class="w-48">
-                        <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 block">Almacén / Maletín</label>
-                        <select id="filterAlmacen" onchange="applyFilters()" class="w-full px-4 py-2.5 bg-gray-50 border border-gray-100 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500">
-                            <option value="all">Ver Global</option>
-                            <option value="central">Central</option>
-                            {% for v in vendedores %}
-                            <option value="v-{{ v.id }}">{{ v.nombre.split()[0] }}</option>
-                            {% endfor %}
-                        </select>
+                        <div class="w-full lg:w-auto">
+                            <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 block">Categoría</label>
+                            <select id="filterCategoria" onchange="applyFilters()" class="w-full px-4 py-2.5 bg-gray-50 border border-gray-100 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500">
+                                <option value="all">Todas</option>
+                                {% for cat in productos|map(attribute='categoria')|unique %}
+                                <option value="{{ cat }}">{{ cat }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="w-full lg:w-auto">
+                            <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 block">Zona de Vendedoras</label>
+                            <select id="zoneFilter" onchange="applyFilters()" class="w-full px-4 py-2.5 bg-gray-50 border border-gray-100 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500">
+                                <option value="all">Todas</option>
+                                {% for zona in vendedores|map(attribute='zona')|unique %}
+                                <option value="{{ zona }}">{{ zona }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="w-full lg:w-auto">
+                            <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 block">Filtrar Vendedoras</label>
+                            <div class="relative">
+                                <select id="filterVendedores" multiple size="4" onchange="applyFilters()" class="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-2xl text-sm outline-none focus:ring-2 focus:ring-blue-500 text-slate-700">
+                                    {% for v in vendedores %}
+                                    <option value="{{ v.id }}">{{ v.nombre }} - {{ v.zona or 'Sin zona' }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="flex items-center justify-between gap-2 mt-2">
+                                <p class="text-[10px] text-slate-400">Ctrl/Cmd + Click para seleccionar varias</p>
+                                <button type="button" onclick="resetInventoryVendorFilters()" class="px-3 py-2 rounded-2xl text-slate-600 bg-slate-100 border border-slate-200 text-xs font-bold">Reset</button>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -194,7 +209,7 @@
                                     <th class="px-8 py-6">Valor Unit.</th>
                                     <th class="px-8 py-6 col-stock" data-almacen="central">Stock Central</th>
                                     {% for v in vendedores %}
-                                    <th class="px-8 py-6 col-stock" data-almacen="v-{{ v.id }}">Stock {{ v.zona or 'Vendedor' }} ({{ v.nombre.split()[0] }})</th>
+                                    <th class="px-8 py-6 col-stock" data-almacen="v-{{ v.id }}" data-zone="{{ v.zona or '' }}">Stock {{ v.zona or 'Vendedor' }} ({{ v.nombre.split()[0] }})</th>
                                     {% endfor %}
                                     <th class="px-8 py-6 text-right">Acciones</th>
                                 </tr>
@@ -217,7 +232,7 @@
                                     {% for v in vendedores %}
                                     {% set inv = p.inventarios | selectattr("id_vendedor", "equalto", v.id) | first %}
                                     {% set qty = inv.cantidad if inv else 0 %}
-                                    <td class="px-8 py-5 col-stock row-v-{{ v.id }}" data-almacen="v-{{ v.id }}" data-qty="{{ qty }}">
+                                    <td class="px-8 py-5 col-stock row-v-{{ v.id }}" data-almacen="v-{{ v.id }}" data-zone="{{ v.zona or '' }}" data-qty="{{ qty }}">
                                         <div class="stock-badge stock-vendedor">{{ qty }}</div>
                                     </td>
                                     {% endfor %}
@@ -308,56 +323,78 @@
         function applyFilters() {
             const query = document.getElementById('filterProducto').value.toLowerCase();
             const cat = document.getElementById('filterCategoria').value;
-            const alm = document.getElementById('filterAlmacen').value;
-            
+            const selectedZone = document.getElementById('zoneFilter').value;
+            const selectedVendors = Array.from(document.getElementById('filterVendedores').selectedOptions).map(option => option.value);
+            const showAllVendors = selectedVendors.length === 0;
+
             const rows = document.querySelectorAll('.inventory-row');
             const headers = document.querySelectorAll('.col-stock');
 
-            // Filtrar Columnas si se elige un almacén específico
             headers.forEach(h => {
                 const targetAlm = h.getAttribute('data-almacen');
-                if (alm === 'all' || targetAlm === alm) {
+                if (!targetAlm || targetAlm === 'central') {
                     h.style.display = "";
-                } else {
-                    h.style.display = "none";
+                    return;
                 }
+
+                const headerZone = h.getAttribute('data-zone');
+                const vendorId = targetAlm.replace('v-', '');
+                const matchesVendor = showAllVendors || selectedVendors.includes(vendorId);
+                const matchesZone = selectedZone === 'all' || headerZone === selectedZone;
+                h.style.display = (matchesVendor && matchesZone) ? "" : "none";
             });
 
-            // Filtrar Filas
             rows.forEach(row => {
                 const nombre = row.getAttribute('data-nombre');
                 const categoria = row.getAttribute('data-categoria');
-                const centralQty = parseInt(row.getAttribute('data-central'));
-                
+                const centralQty = parseInt(row.getAttribute('data-central')) || 0;
+
                 let matchesSearch = nombre.includes(query);
                 let matchesCat = (cat === 'all' || categoria === cat);
-                let matchesAlm = true;
+                let matchesZone = true;
 
-                // Si se filtra por almacén específico, opcionalmente ocultar filas con stock 0 en ese almacén
-                if (alm !== 'all') {
-                    if (alm === 'central') {
-                        matchesAlm = centralQty > 0;
-                    } else {
-                        const cell = row.querySelector(`.row-${alm}`);
-                        const qty = parseInt(cell.getAttribute('data-qty'));
-                        matchesAlm = qty > 0;
-                    }
+                if (selectedZone !== 'all' && selectedZone !== '') {
+                    let anyVendorInZone = false;
+                    row.querySelectorAll('.col-stock[data-zone]').forEach(c => {
+                        if (c.getAttribute('data-zone') === selectedZone && c.style.display !== 'none' && parseInt(c.getAttribute('data-qty')) > 0) {
+                            anyVendorInZone = true;
+                        }
+                    });
+                    matchesZone = anyVendorInZone || centralQty > 0;
                 }
 
-                // Ocultar/Mostrar celdas de stock según la columna
                 const cells = row.querySelectorAll('.col-stock');
                 cells.forEach(c => {
                     const targetAlm = c.getAttribute('data-almacen');
-                    c.style.display = (alm === 'all' || targetAlm === alm) ? "" : "none";
+                    if (!targetAlm || targetAlm === 'central') {
+                        c.style.display = "";
+                        return;
+                    }
+                    const headerZone = c.getAttribute('data-zone');
+                    const vendorId = targetAlm.replace('v-', '');
+                    const matchesVendor = showAllVendors || selectedVendors.includes(vendorId);
+                    const matchesHeaderZone = selectedZone === 'all' || headerZone === selectedZone;
+                    c.style.display = (matchesVendor && matchesHeaderZone) ? "" : "none";
                 });
 
-                if (matchesSearch && matchesCat && matchesAlm) {
+                if (matchesSearch && matchesCat && matchesZone) {
                     row.style.display = "";
                 } else {
                     row.style.display = "none";
                 }
             });
         }
+
+        function resetInventoryVendorFilters() {
+            document.getElementById('zoneFilter').value = 'all';
+            const vendorSelect = document.getElementById('filterVendedores');
+            Array.from(vendorSelect.options).forEach(option => option.selected = false);
+            applyFilters();
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            applyFilters();
+        });
     </script>
 </body>
 </html>

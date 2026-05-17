@@ -171,19 +171,6 @@
                             <button onclick="filterPeriod('last')" class="px-5 py-2.5 rounded-xl text-xs font-bold text-slate-500 hover:text-slate-800 transition-all period-btn" data-period="last">Mes Pasado</button>
                         </div>
 
-                        <!-- Divisor -->
-                        <div class="h-8 w-px bg-gray-100"></div>
-
-                        <!-- Filtro de Vendedor (Backend) -->
-                        <div class="flex items-center gap-3">
-                            <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Filtrar Vendedor:</span>
-                            <div class="flex bg-gray-50 p-1 rounded-2xl border border-gray-100">
-                                <a href="/admin/gestion_pedidos" class="px-4 py-2 rounded-xl text-[11px] font-bold {% if not request.args.get('vendedor_id') %}bg-white text-slate-800 shadow-sm border border-gray-100{% else %}text-slate-500 hover:text-slate-800{% endif %} transition-all">Todos</a>
-                                {% for v in vendedores %}
-                                <a href="/admin/gestion_pedidos?vendedor_id={{ v.id }}" class="px-4 py-2 rounded-xl text-[11px] font-bold {% if request.args.get('vendedor_id')|int == v.id %}bg-white text-slate-800 shadow-sm border border-gray-100{% else %}text-slate-500 hover:text-slate-800{% endif %} transition-all">{{ v.nombre.split(' ')[0] }}</a>
-                                {% endfor %}
-                            </div>
-                        </div>
                     </div>
                     
                     <div class="relative flex-1 max-w-xs">
@@ -222,6 +209,7 @@
                                     <tbody class="divide-y divide-gray-50">
                                         {% for pedido in ciclo.pedidos %}
                                         <tr class="hover:bg-slate-50 transition-colors cursor-pointer group sale-row" 
+                                            data-vendedor="{{ pedido.vendedor.nombre }}" data-estado="{{ pedido.estado }}"
                                             onclick="openPedidoModal('{{ pedido.codigo }}', '{{ pedido.vendedor.nombre }}', '{{ pedido.cliente.nombre }}', '{{ pedido.productos|tojson|forceescape }}', '{{ "{:,.2f}".format(pedido.total) }}', '{{ pedido.fecha.strftime('%d %b, %H:%M') }}', '{{ pedido.cliente.rif }}', '{{ pedido.cliente.direccion }}', '{{ pedido.estado }}')">
                                             <td class="px-8 py-5">
                                                 <div class="flex items-center gap-3">
@@ -331,7 +319,10 @@
                 </div>
 
                 <!-- BOTONES DE ACCIÓN -->
-                <div id="modal-actions" class="grid grid-cols-2 gap-4">
+                <div id="modal-actions" class="grid grid-cols-3 gap-4">
+                    <button id="btn-espera" class="py-4 bg-slate-50 text-slate-700 font-bold rounded-2xl hover:bg-slate-100 transition-all flex items-center justify-center gap-2 border border-slate-100">
+                        <i data-lucide="refresh-ccw" class="w-5 h-5"></i> Marcar En espera
+                    </button>
                     <button id="btn-rechazar" class="py-4 bg-rose-50 text-rose-600 font-bold rounded-2xl hover:bg-rose-100 transition-all flex items-center justify-center gap-2 border border-rose-100">
                         <i data-lucide="x-circle" class="w-5 h-5"></i> Rechazar Venta
                     </button>
@@ -431,10 +422,15 @@
             badge.innerText = estado;
             badge.className = 'status-badge ' + (estado === 'En espera' ? 'status-espera' : (estado === 'Procesada' ? 'status-procesada' : 'status-rechazada'));
 
-            // Ocultar acciones si ya no está en espera
             const actions = document.getElementById('modal-actions');
-            actions.style.display = (estado === 'En espera') ? 'grid' : 'none';
+            actions.style.display = 'grid';
         }
+
+        document.getElementById('btn-espera').onclick = () => {
+            if (confirm('¿Confirmas que deseas marcar esta venta como En espera?')) {
+                window.location.href = `/admin/actualizar_pedido/${currentPedidoCodigo}/En espera`;
+            }
+        };
 
         document.getElementById('btn-procesar').onclick = () => {
             if(confirm('¿Confirmas que deseas procesar este pedido completo?')) {

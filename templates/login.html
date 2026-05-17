@@ -25,7 +25,7 @@
             <div class="flex justify-center mb-6">
                 <img src="{{ url_for('static', filename='img/logo.png') }}" class="w-28 h-28 rounded-full object-cover shadow-xl border-4 border-white" onerror="this.src='https://ui-avatars.com/api/?name=AMI&background=c9a84c&color=fff&size=128'">
             </div>
-            <h1 class="text-2xl font-black text-slate-900 tracking-tight">Bienvenido a AMI</h1>
+            <h1 class="text-2xl font-black text-slate-900 tracking-tight">Bienvenido a <br>AMInventary</h1>
             <p class="text-sm font-bold text-slate-400 mt-2">Ingresa tus credenciales para continuar</p>
         </div>
 
@@ -48,7 +48,7 @@
                 <label class="block text-xs font-black text-slate-400 uppercase tracking-widest">Cédula o Usuario</label>
                 <div class="relative">
                     <i data-lucide="user" class="absolute left-4 top-3.5 w-5 h-5 text-slate-400"></i>
-                    <input type="text" name="identificador" required placeholder="Ej: 27622091" 
+                    <input type="text" name="identificador" required placeholder="Ej: V-12345678" 
                            class="w-full pl-12 pr-4 py-3.5 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-2 focus:ring-[#c9a84c] outline-none text-sm font-bold text-slate-700 transition-all">
                 </div>
             </div>
@@ -57,8 +57,11 @@
                 <label class="block text-xs font-black text-slate-400 uppercase tracking-widest">Contraseña</label>
                 <div class="relative">
                     <i data-lucide="lock" class="absolute left-4 top-3.5 w-5 h-5 text-slate-400"></i>
-                    <input type="password" name="password" required placeholder="••••••••" 
-                           class="w-full pl-12 pr-4 py-3.5 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-2 focus:ring-[#c9a84c] outline-none text-sm font-bold text-slate-700 transition-all">
+                    <input id="passwordInput" type="password" name="password" required placeholder="••••••••" 
+                           class="w-full pl-12 pr-12 py-3.5 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-2 focus:ring-[#c9a84c] outline-none text-sm font-bold text-slate-700 transition-all">
+                    <button type="button" onclick="togglePassword()" class="absolute right-3 top-3.5 text-slate-400 hover:text-slate-700 transition-colors">
+                        <i data-lucide="eye" id="togglePasswordIcon" class="w-5 h-5"></i>
+                    </button>
                 </div>
             </div>
 
@@ -75,6 +78,20 @@
     </div>
 
     <script>
+        function togglePassword() {
+            const input = document.getElementById('passwordInput');
+            const icon = document.getElementById('togglePasswordIcon');
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.setAttribute('data-feather', 'eye-off');
+                icon.parentElement.innerHTML = '<i data-lucide="eye-off" id="togglePasswordIcon" class="w-5 h-5"></i>';
+            } else {
+                input.type = 'password';
+                icon.setAttribute('data-feather', 'eye');
+                icon.parentElement.innerHTML = '<i data-lucide="eye" id="togglePasswordIcon" class="w-5 h-5"></i>';
+            }
+            lucide.createIcons();
+        }
         lucide.createIcons();
     </script>
 </body>

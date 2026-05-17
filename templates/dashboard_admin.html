@@ -143,7 +143,7 @@
                     <div class="bg-white p-6 rounded-3xl card-shadow border border-gray-100 relative overflow-hidden group">
                         <div class="absolute -right-4 -top-4 w-20 h-20 bg-emerald-50 rounded-full opacity-50 group-hover:scale-150 transition-transform duration-500"></div>
                         <p class="text-xs font-bold text-slate-400 uppercase tracking-widest">Producto Top</p>
-                        <p class="text-xl font-bold text-slate-900 mt-3 truncate">{{ producto_top }}</p>
+                        <p class="text-xl font-bold text-slate-900 mt-3 truncate">{{ top_productos[0].nombre if top_productos else 'N/A' }}</p>
                         <p class="text-xs text-emerald-500 font-bold mt-2">Alta Rotación</p>
                     </div>
                 </div>
@@ -182,28 +182,72 @@
                 <!-- RANKING PRODUCTOS EXTREMOS -->
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
                     <!-- Producto que menos se vendió -->
-                    <div class="bg-white p-8 rounded-[2rem] card-shadow border border-gray-100 flex items-center gap-8 group">
-                        <div class="w-24 h-24 rounded-3xl bg-red-50 flex items-center justify-center text-red-500 group-hover:scale-110 transition-transform duration-500">
-                            <i data-lucide="trending-down" class="w-12 h-12"></i>
+                    <div class="bg-white p-8 rounded-[2rem] card-shadow border border-gray-100 group">
+                        <div class="flex items-center gap-6 mb-6">
+                            <div class="w-24 h-24 rounded-3xl bg-red-50 flex items-center justify-center text-red-500 group-hover:scale-110 transition-transform duration-500">
+                                <i data-lucide="trending-down" class="w-12 h-12"></i>
+                            </div>
+                            <div>
+                                <p class="text-xs font-bold text-red-400 uppercase tracking-widest">3 Productos Menos Vendidos</p>
+                                <p class="text-sm text-slate-500 mt-1">Identifica los productos con menor rotación.</p>
+                            </div>
                         </div>
-                        <div>
-                            <p class="text-xs font-bold text-red-400 uppercase tracking-widest">Producto Menos Vendido (Mes)</p>
-                            <h4 class="text-2xl font-black text-slate-800 mt-2">{{ producto_bottom }}</h4>
-                            <p class="text-sm text-slate-500 mt-1">Considere estrategias de promoción o liquidación.</p>
-                        </div>
+                        <ul class="space-y-3">
+                            {% for item in bottom_productos %}
+                            <li class="flex items-center justify-between rounded-2xl border border-red-100 bg-red-50/70 p-4">
+                                <span class="font-semibold text-slate-800">{{ loop.index }}. {{ item.nombre }}</span>
+                                <span class="text-sm text-slate-500">{{ item.cantidad }} unidades</span>
+                            </li>
+                            {% endfor %}
+                        </ul>
                     </div>
 
                     <!-- Producto más vendido -->
-                    <div class="bg-white p-8 rounded-[2rem] card-shadow border border-gray-100 flex items-center gap-8 group">
-                        <div class="w-24 h-24 rounded-3xl bg-green-50 flex items-center justify-center text-green-500 group-hover:scale-110 transition-transform duration-500">
-                            <i data-lucide="flame" class="w-12 h-12"></i>
+                    <div class="bg-white p-8 rounded-[2rem] card-shadow border border-gray-100 group">
+                        <div class="flex items-center gap-6 mb-6">
+                            <div class="w-24 h-24 rounded-3xl bg-green-50 flex items-center justify-center text-green-500 group-hover:scale-110 transition-transform duration-500">
+                                <i data-lucide="flame" class="w-12 h-12"></i>
+                            </div>
+                            <div>
+                                <p class="text-xs font-bold text-green-400 uppercase tracking-widest">3 Productos Más Vendidos</p>
+                                <p class="text-sm text-slate-500 mt-1">Los productos que más mueven inventario.</p>
+                            </div>
                         </div>
+                        <ul class="space-y-3">
+                            {% for item in top_productos %}
+                            <li class="flex items-center justify-between rounded-2xl border border-emerald-100 bg-emerald-50/70 p-4">
+                                <span class="font-semibold text-slate-800">{{ loop.index }}. {{ item.nombre }}</span>
+                                <span class="text-sm text-slate-500">{{ item.cantidad }} unidades</span>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- REPORTE DE VENTAS -->
+                <div id="reporte-ventas" class="bg-white p-8 rounded-[2rem] card-shadow border border-gray-100">
+                    <div class="flex flex-col lg:flex-row justify-between gap-4 mb-8">
                         <div>
-                            <p class="text-xs font-bold text-green-400 uppercase tracking-widest">Producto Estrella (Mes)</p>
-                            <h4 class="text-2xl font-black text-slate-800 mt-2">{{ producto_top }}</h4>
-                            <p class="text-sm text-slate-500 mt-1">Asegure stock central para cubrir la demanda.</p>
+                            <p class="text-xs uppercase tracking-[0.25em] text-slate-400 font-bold">Reporte de Ventas</p>
+                            <h2 class="text-2xl font-black text-slate-900 mt-3">Ventas Totales últimos 3 meses</h2>
+                            <p class="text-sm text-slate-500 mt-2">Selecciona ventas por vendedor o por producto.</p>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <button id="btnReporteVendedor" class="px-5 py-3 rounded-2xl bg-slate-900 text-white text-sm font-black">Por Vendedora</button>
+                            <button id="btnReporteProducto" class="px-5 py-3 rounded-2xl bg-slate-100 text-slate-600 text-sm font-black">Por Producto</button>
                         </div>
                     </div>
+                    <div class="flex flex-wrap items-center justify-between gap-6 mb-6">
+                        <div>
+                            <p class="text-xs uppercase tracking-[0.25em] text-slate-400 font-bold">Total en 3 meses</p>
+                            <p class="text-3xl font-black text-slate-900" id="reporte-total">${{ "{:,.2f}".format(reporte_ventas_total) }}</p>
+                        </div>
+                        <div class="text-sm text-slate-500">
+                            <span class="font-bold">Vendedoras:</span> {{ reporte_ventas_vendedores|length }} registros<br>
+                            <span class="font-bold">Productos:</span> {{ reporte_ventas_productos|length }} registros
+                        </div>
+                    </div>
+                    <div id="chart-reporte-ventas"></div>
                 </div>
 
             </div>
@@ -288,8 +332,83 @@
         var chartVendedoras = new ApexCharts(document.querySelector("#chart-vendedoras-comparativa"), optionsVendedoras);
         chartVendedoras.render();
 
+        var reporteVentasVendedores = {{ reporte_ventas_vendedores | tojson }};
+        var reporteVentasProductos = {{ reporte_ventas_productos | tojson }};
+        var reporteChart = null;
+        var reporteView = 'vendedor';
+
+        function buildReporteChart(data) {
+            return new ApexCharts(document.querySelector("#chart-reporte-ventas"), {
+                series: [{
+                    name: 'Ventas Totales',
+                    data: data.map(item => item.total)
+                }],
+                chart: {
+                    type: 'bar',
+                    height: 320,
+                    toolbar: { show: false },
+                    fontFamily: 'DM Sans, sans-serif'
+                },
+                plotOptions: {
+                    bar: {
+                        borderRadius: 12,
+                        horizontal: false,
+                        columnWidth: '55%'
+                    }
+                },
+                colors: ['#c9a84c'],
+                dataLabels: { enabled: false },
+                xaxis: {
+                    categories: data.map(item => item.nombre),
+                    labels: { style: { fontSize: '12px' } }
+                },
+                yaxis: {
+                    labels: { formatter: function(val) { return '$' + val; } }
+                },
+                tooltip: {
+                    y: { formatter: function(val) { return '$' + val; } }
+                },
+                grid: { borderColor: '#f1f1f1' }
+            });
+        }
+
+        function updateReporteChart(dataset) {
+            if (reporteChart) {
+                reporteChart.destroy();
+            }
+            reporteChart = buildReporteChart(dataset);
+            reporteChart.render();
+        }
+
+        function setReporteView(view) {
+            reporteView = view;
+            var btnV = document.getElementById('btnReporteVendedor');
+            var btnP = document.getElementById('btnReporteProducto');
+            var totalLabel = document.getElementById('reporte-total');
+
+            if (view === 'producto') {
+                btnP.classList.add('bg-slate-900', 'text-white');
+                btnP.classList.remove('bg-slate-100', 'text-slate-600');
+                btnV.classList.remove('bg-slate-900', 'text-white');
+                btnV.classList.add('bg-slate-100', 'text-slate-600');
+                updateReporteChart(reporteVentasProductos);
+                totalLabel.textContent = '$' + reporteVentasProductos.reduce((sum, item) => sum + item.total, 0).toFixed(2);
+            } else {
+                btnV.classList.add('bg-slate-900', 'text-white');
+                btnV.classList.remove('bg-slate-100', 'text-slate-600');
+                btnP.classList.remove('bg-slate-900', 'text-white');
+                btnP.classList.add('bg-slate-100', 'text-slate-600');
+                updateReporteChart(reporteVentasVendedores);
+                totalLabel.textContent = '$' + reporteVentasVendedores.reduce((sum, item) => sum + item.total, 0).toFixed(2);
+            }
+        }
+
+        document.getElementById('btnReporteVendedor').addEventListener('click', function() { setReporteView('vendedor'); });
+        document.getElementById('btnReporteProducto').addEventListener('click', function() { setReporteView('producto'); });
+
         // Inicializar Lucide
         lucide.createIcons();
+        setReporteView('vendedor');
     </script>
 </body>
 </html>

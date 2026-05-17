@@ -49,7 +49,17 @@
                 <div class="grid grid-cols-2 gap-6">
                     <div class="flex flex-col gap-2">
                         <label class="text-xs font-bold text-slate-700 uppercase tracking-wider">Cédula de Identidad</label>
-                        <input type="text" name="cedula" value="{{ vendedor.cedula }}" required class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:bg-white focus:border-[#c9a84c] outline-none transition-all">
+                        <div class="grid grid-cols-[1fr_2fr] gap-2">
+                            <select name="cedula_tipo" required class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:bg-white focus:border-[#c9a84c] outline-none transition-all appearance-none">
+                                <option value="" disabled {% if not vendedor.cedula %}selected{% endif %}>Tipo</option>
+                                <option value="V" {% if vendedor.cedula.split('-')[0] == 'V' %}selected{% endif %}>V</option>
+                                <option value="J" {% if vendedor.cedula.split('-')[0] == 'J' %}selected{% endif %}>J</option>
+                                <option value="E" {% if vendedor.cedula.split('-')[0] == 'E' %}selected{% endif %}>E</option>
+                                <option value="G" {% if vendedor.cedula.split('-')[0] == 'G' %}selected{% endif %}>G</option>
+                            </select>
+                            <input type="text" name="cedula_numero" required inputmode="numeric" pattern="\d{8,9}" maxlength="{{ 8 if vendedor.cedula.split('-')[0] == 'V' else 9 }}" value="{{ vendedor.cedula.split('-')[1] }}"
+                                class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:bg-white focus:border-[#c9a84c] outline-none transition-all">
+                        </div>
                     </div>
                     <div class="flex flex-col gap-2">
                         <label class="text-xs font-bold text-slate-700 uppercase tracking-wider">Nombre de Usuario</label>
@@ -114,5 +124,26 @@
     </main>
 
     <script>lucide.createIcons();</script>
+<script>
+function adjustIdentificationLength(select) {
+    const targetName = select.name === 'rif_tipo' ? 'rif_numero' : 'cedula_numero';
+    const target = document.querySelector(`input[name="${targetName}"]`);
+    if (!target) return;
+
+    target.maxLength = select.value === 'V' ? 8 : 9;
+    target.placeholder = select.value === 'V' ? '12345678' : '123456780';
+}
+
+function initIdentificationInputs() {
+    document.querySelectorAll('select[name="rif_tipo"], select[name="cedula_tipo"]').forEach(function(select) {
+        select.addEventListener('change', function() { adjustIdentificationLength(select); });
+        if (select.value) {
+            adjustIdentificationLength(select);
+        }
+    });
+}
+
+document.addEventListener('DOMContentLoaded', initIdentificationInputs);
+</script>
 </body>
 </html>
